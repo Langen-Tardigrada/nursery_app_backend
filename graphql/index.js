@@ -3,3 +3,4 @@ require('@babel/register')({
 })
 
 require('./src/app')
+// change file.js to .ts
