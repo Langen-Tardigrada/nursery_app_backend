@@ -1,6 +1,9 @@
 import {ApolloServer,gql} from 'apollo-server'
 import {ApolloServerPluginLandingPageGraphQLPlayground} from "apollo-server-core"
+import {makeExecutableSchema} from '@graphql-tools/schema'
 import { v4 as uuidv4} from 'uuid'
+import {GraphQLSchema,GraphQLObjectType, GraphQLString, GraphQLInt} from  'graphql'
+import { DateScalar, TimeScalar, DateTimeScalar } from 'graphql-date-scalars'
 
 // Scalar types - String, Boolean, Int, Float, ID
 
@@ -30,8 +33,27 @@ const users = [
         }
     }
 ] 
+
+const AddressType = new GraphQLObjectType({
+    name: 'Address',
+    fields: {
+        info: { type: GraphQLString },
+        district: { type: GraphQLString },
+        sub_province: { type: GraphQLString },
+        province: { type: GraphQLString},
+        country: { type: GraphQLString},
+        postcode: { type: GraphQLInt },
+    }
+})
+
 //*Type definitions (schema)
 const typeDefs = gql`
+
+    scalar Date
+    scalar DateTime
+    scalar Time
+    scalar Address
+
     type Query {
         users(query: String): [User!]!
         # address0(query: String): [Address!]!
@@ -44,24 +66,25 @@ const typeDefs = gql`
         # parent:Parent!
     }
 
-    # type Mutation {
-    #     createUser(
-    #         id:ID!
-    #         firstname:String! 
-    #         lastname:String!
-    #         email: String!
-    #         age: Int!
-    #         date_of_birth:String!
-    #         ethnicity:String!
-    #         gender:String!
-    #         national:String!
-    #         phone:Int!
-    #         region:String!
-    #         info: String!
-    #         username:String!
-    #         password:Int!
+    type Mutation {
+        createUser(
+            id:ID!
+            firstname:String! 
+            lastname:String!
+            email: String!
+            age: Int!
+            date_of_birth:String!
+            ethnicity:String!
+            gender:String!
+            national:String!
+            phone:Int!
+            region:String!
+            info: String!
+            username:String!
+            password:Int!
     
-    #        ): User!
+           ): User!
+    }
     #     createAddress(
     #         info: String!
     #         province: String!
@@ -71,20 +94,12 @@ const typeDefs = gql`
     #     ):Address!
     # }
 
-    type Address {
-        info: String!
-        province: String!
-        sub_province: String!
-        country: String!
-        postcode: Int!
-    }
-
     type User {
         id: ID!
         firstname:String!
         lastname:String!
         age: Int!
-        date_of_birth:date!
+        date_of_birth: Date!
         gender:String!
         nationality:String!
         ethnicity:String!
@@ -316,8 +331,31 @@ const typeDefs = gql`
 // Resolvers
 // const index = Object(userInfo)
 
+// const dateScalar = new GraphQLScalarType({
+//     name: 'Date',
+//     description: 'Date custom scalar type',
+//     serialize(value: unknown) {
+//         let date:Date = new Date(value)
+//         return date.getTime(); // Convsert outgoing Date to integer for JSON
+//     },
+//     parseValue(value:unknown) {
+//         return new Date(value); // Convert incoming integer to Date
+//     },
+//     parseLiteral(ast) {
+//         if (ast.kind === Kind.INT) {
+//         return new Date(parseInt(ast.value, 10)); // Convert hard-coded AST string to integer and then to Date
+//         }
+//         return null; // Invalid hard-coded value (not an integer)
+//     },
+// })
+
 //*Resolvers
 const resolvers = {
+    // Date: dateScalar,
+    Date: DateScalar,
+    Time: TimeScalar,
+    DateTime: DateTimeScalar,
+    Address: AddressType,
     Query: { 
         users(parent, args, ctx, info) {
             if (!args.query) {
@@ -421,91 +459,19 @@ const resolvers = {
         // }
         
     },
-    // Mutation: { 
-    //             createAddress(parent, args, ctx, info) {
-    //                 const addresses = {
-    //                         info: args.info,
-    //                         province:args.province,
-    //                         sub_province: args.sub_province,
-    //                         country: args.country,
-    //                         postcode: args.postcode
-    //                 }
-    //                 address0.push(addresses)
-    //                 return addresses
-    //             },
-    //             createUser(parent, args, ctx, info) {
-    //                 const emailTaken = userInfo.some((user) => user.email === args.email)
-
-    //                 if (emailTaken) {
-    //                     throw new Error('Email taken')
-    //                 }
-    //                 const addresses = {
-    //                     info: args.info,
-    //                     province:args.province,
-    //                     sub_province: args.sub_province,
-    //                     country: args.country,
-    //                     postcode: args.postcode
-    //             }
-    //                 const user = {
-    //                     id: uuidv4(),
-    //                     firstname:args.firstname,
-    //                     lastname:args.lastname,
-    //                     nickname:args.nickname,
-    //                     email:args.email,
-    //                     age: args.age,
-    //                     date_of_birth:args.date_of_birth,
-    //                     ethnicity:args.ethnicity,
-    //                     gender:args.gender,
-    //                     national:args.national,
-    //                     phone:args.phone,
-    //                     region:args.region,
-    //                     username:args.username,
-    //                     password:args.password,
-    //                     identity:args.identity,
-    //                     ...addresses
-    //                 }
-    //                 userInfo.push(user)
-
-    //                 return user
-    //             }
-            
     
-    // },
-    // Address: {
-    //     country(parent, args, ctx, info) {
-    //         return userInfo.find((user) => {
-    //             return user.address.country === parent.country
-    //         })
-    //     },
-    //     sub_province(parent, args, ctx, info) {
-    //         return userInfo.find((user) => {
-    //             return user.address.sub_province === parent.sub_province
-    //         })
-    //     },
-    //     province(parent, args, ctx, info) {
-    //         return userInfo.find((user) => {
-    //             return user.address.province === parent.province
-    //         })
-    //     },
-    //     postcode(parent, args, ctx, info) {
-    //         return userInfo.find((user) => {
-    //             return user.address.postcode === parent.postcode
-    //         })
-    //     },
-      
-    // }
     
 }
 
 const server = new ApolloServer({
-    typeDefs,
-    resolvers,
-    introspection: true,
-    plugins: [
-        ApolloServerPluginLandingPageGraphQLPlayground(),
-    ],
+        typeDefs,
+        resolvers,
+        introspection: true,
+        plugins: [
+            ApolloServerPluginLandingPageGraphQLPlayground(),
+        ],
 })
 
-server.listen().then(({url}) => {
+server.listen({ port:5000}).then(({url}) => {
     console.log(`Server ready at ${url}`)
 })
