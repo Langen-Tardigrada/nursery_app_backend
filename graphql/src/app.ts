@@ -6,8 +6,7 @@ import {GraphQLSchema,GraphQLObjectType, GraphQLString, GraphQLInt} from  'graph
 import { DateScalar, TimeScalar, DateTimeScalar } from 'graphql-date-scalars'
 
 // Scalar types - String, Boolean, Int, Float, ID
-
-// Demo user data
+// Demo data
 const users = [
     {
         id: '1',
@@ -56,8 +55,6 @@ const typeDefs = gql`
 
     type Query {
         users(query: String): [User!]!
-        # address0(query: String): [Address!]!
-        # address:Address!
         # employees: [User!]!
         # customers: [Customer!]!
         # kids: [Kid!]!
@@ -67,32 +64,21 @@ const typeDefs = gql`
     }
 
     type Mutation {
-        createUser(
-            id:ID!
-            firstname:String! 
-            lastname:String!
-            email: String!
-            age: Int!
-            date_of_birth:String!
-            ethnicity:String!
-            gender:String!
-            national:String!
-            phone:Int!
-            region:String!
-            info: String!
-            username:String!
-            password:Int!
-    
-           ): User!
+        createUser(data: CreateUserInput): User!
     }
-    #     createAddress(
-    #         info: String!
-    #         province: String!
-    #         sub_province: String!
-    #         country: String!
-    #         postcode: Int!
-    #     ):Address!
-    # }
+
+    input CreateUserInput{
+        firstname:String!
+        lastname:String!
+        age: Int!
+        date_of_birth: Date!
+        gender:String!
+        nationality:String!
+        ethnicity:String!
+        region:String!
+        phone:String!
+        address: Address!
+    }
 
     type User {
         id: ID!
@@ -104,7 +90,7 @@ const typeDefs = gql`
         nationality:String!
         ethnicity:String!
         region:String!
-        phone:Int!
+        phone:String!
         address: Address!
     # }
  
@@ -459,8 +445,16 @@ const resolvers = {
         // }
         
     },
-    
-    
+    Mutation: {
+        createUser(parent, args, ctx, info){
+            const user = {
+                id: uuidv4(),
+                ...args.data
+            }
+            users.push(user)
+            return user
+        }
+    }
 }
 
 const server = new ApolloServer({
