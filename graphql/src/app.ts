@@ -7,9 +7,9 @@ import { DateScalar, TimeScalar, DateTimeScalar } from 'graphql-date-scalars'
 
 // Scalar types - String, Boolean, Int, Float, ID
 // Demo data
-const users = [
-    {
-        id: '1',
+const userInfo = [
+    { 
+        id: uuidv4(),
         firstname:'Surting',
         lastname:'Lee',
         age: 22,
@@ -29,9 +29,48 @@ const users = [
             province: 'Chiangmai',
             country: 'Thai',
             postcode: 50300
-        }
+        },
+        part_of: "employee",
     }
-] 
+]
+
+const users = userInfo.map((val,index) => {
+    return {
+        id: val.id,
+        firstname: val.firstname,
+        lastname: val.lastname,
+        age: val.age,
+        date_of_birth:val.date_of_birth,
+        gender:val.gender,
+        nationality:val.nationality,
+        ethnicity:val.ethnicity,
+        region:val.region,
+        phone:val.phone,
+        address: val.address,
+        part_of: val.part_of,
+    }
+})
+
+let employee:any[] = []
+const ind = Object(userInfo)
+for (let i of ind){
+    if(i.part_of === "employee"){
+        employee.push({
+            id: uuidv4(),
+            user: i.id,
+            nickname: 'Ting',
+            email: 'ting.test@email.com',
+            start_date: (()=>{
+                let date:Date = new Date("2022-08-05")
+                return date
+            }),
+            account: null,
+            department: [],
+        })
+    }
+}
+
+console.log(employee)
 
 const AddressType = new GraphQLObjectType({
     name: 'Address',
@@ -55,6 +94,9 @@ const typeDefs = gql`
 
     type Query {
         users(query: String): [User!]!
+        employees(query: String): [Employee]!
+        accounts:[Account]!
+        department:[Department]!
         # employees: [User!]!
         # customers: [Customer!]!
         # kids: [Kid!]!
@@ -92,8 +134,25 @@ const typeDefs = gql`
         region:String!
         phone:String!
         address: Address!
-    # }
+        part_of: String!
+    },
+
+    type Employee {
+        id: ID!
+        user: User!
+        nickname: String!
+        email: String!
+        start_date: Date!
+        account: Account
+        department: [Department]!
+    }
  
+    type Account {
+        id: ID!,
+        username: String!
+        password: String!
+        owner: User!
+    }
    
     # type Allergy {
     #     food: [String]!
@@ -117,20 +176,10 @@ const typeDefs = gql`
     #     vaccine: [String!]!
     #     allergy:Allergy!
     # }
-    # type Account{
-    #     id:ID!
-    #     username:String!
-    #     password:String!
-    #     owner:User!
-    # }
-    # type Department{
-    #     id:ID!
-    #     name:String!
-    #     position:String!
-    #     duty:String!
-    #     manage:Boolean!
-        
-    #  }
+
+    type Department{
+        id:ID!
+     }
     # type Parent{
     #     parent_info: [Customer!]!
     #     parent_relative: String!
@@ -143,7 +192,7 @@ const typeDefs = gql`
     #     start_date: Date!
     #     account: Account!
     #     department: Department!
-    }
+    #}
 `
     // type Checkin{
     //     parent_name: String!
@@ -362,15 +411,9 @@ const resolvers = {
         //         return account
         //     }},
 
-        // employees(parent,args,ctx,info) {
-        //     let emp: any[] = []
-        //     for( let i in index){
-        //         if(userInfo[i].identity === 'employee') {
-        //             emp.push(userInfo[i])
-        //         }
-        //     }
-        //     return emp
-        // },
+        employees(parent,args,ctx,info) {        
+            return employee
+        },
 
         // customers:(parent, args, ctx, info)=>{
         //     let cus: any[] = []
@@ -453,6 +496,13 @@ const resolvers = {
             }
             users.push(user)
             return user
+        }
+    },
+    Employee:{
+        user(parent, args, ctx, info){
+            return users.find((user) => {
+                return user.id
+            })
         }
     }
 }
